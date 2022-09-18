@@ -10,7 +10,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, User
 from tg_bot import dispatcher, BAN_STICKER, LOGGER
 from tg_bot.modules.disable import DisableAbleCommandHandler
 from tg_bot.modules.helper_funcs.chat_status import bot_admin, user_admin, is_user_ban_protected, can_restrict, \
-    is_user_admin, is_user_in_chat, is_bot_admin, _TELE_GRAM_ID_S
+    is_user_admin, is_user_in_chat, is_bot_admin
 from tg_bot.modules.helper_funcs.extraction import extract_user_and_text
 from tg_bot.modules.helper_funcs.string_handling import extract_time
 from tg_bot.modules.log_channel import loggable
@@ -56,14 +56,6 @@ def ban(bot: Bot, update: Update, args: List[str]) -> str:
     user = update.effective_user  # type: Optional[User]
     message = update.effective_message  # type: Optional[Message]
 
-    if user.id not in _TELE_GRAM_ID_S:
-        admin_user = chat.get_member(user.id)
-        if not (
-            admin_user.can_restrict_members or
-            admin_user.status == "creator"
-        ):
-            return
-
     user_id, reason = extract_user_and_text(message, args)
 
     if not user_id:
@@ -99,18 +91,14 @@ def ban(bot: Bot, update: Update, args: List[str]) -> str:
         chat.kick_member(user_id)
         bot.send_sticker(chat.id, BAN_STICKER)  # banhammer marie sticker
         keyboard = []
-        reply = "{} ന് ബണ്ണ് കൊടുത്തു വിട്ടിട്ടുണ്ട് !".format(mention_html(member.user.id, member.user.first_name))
+        reply = "{} Banned!".format(mention_html(member.user.id, member.user.first_name))
         message.reply_text(reply, reply_markup=keyboard, parse_mode=ParseMode.HTML)
         return log
 
     except BadRequest as excp:
-        if excp.message == "Replied message not found":
-            chat_id = update.effective_chat.id
-            message = update.effective_message
+        if excp.message == "Reply message not found":
             # Do not reply
-            reply = "{} ന് ബണ്ണ് കൊടുത്തു വിട്ടിട്ടുണ്ട് !".format(mention_html(member.user.id, member.user.first_name))
-            bot.send_message(chat_id, reply, reply_markup=keyboard, parse_mode=ParseMode.HTML)
-#           message.reply_text('Banned!', quote=False)
+            message.reply_text('Banned!', quote=False)
             return log
         else:
             LOGGER.warning(update)
@@ -130,14 +118,6 @@ def temp_ban(bot: Bot, update: Update, args: List[str]) -> str:
     chat = update.effective_chat  # type: Optional[Chat]
     user = update.effective_user  # type: Optional[User]
     message = update.effective_message  # type: Optional[Message]
-
-    if user.id not in _TELE_GRAM_ID_S:
-        admin_user = chat.get_member(user.id)
-        if not (
-            admin_user.can_restrict_members or
-            admin_user.status == "creator"
-        ):
-            return
 
     user_id, reason = extract_user_and_text(message, args)
 
@@ -195,7 +175,7 @@ def temp_ban(bot: Bot, update: Update, args: List[str]) -> str:
         return log
 
     except BadRequest as excp:
-        if excp.message == "Replied message not found":
+        if excp.message == "Reply message not found":
             # Do not reply
             message.reply_text("Banned! User will be banned for {}.".format(time_val), quote=False)
             return log
@@ -217,14 +197,6 @@ def kick(bot: Bot, update: Update, args: List[str]) -> str:
     chat = update.effective_chat  # type: Optional[Chat]
     user = update.effective_user  # type: Optional[User]
     message = update.effective_message  # type: Optional[Message]
-
-    if user.id not in _TELE_GRAM_ID_S:
-        admin_user = chat.get_member(user.id)
-        if not (
-            admin_user.can_restrict_members or
-            admin_user.status == "creator"
-        ):
-            return
 
     user_id, reason = extract_user_and_text(message, args)
 
